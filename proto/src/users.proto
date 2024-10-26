@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package centray;
+
+option go_package = "pkg/grpc";
+
+message User {
+  uint64 id = 1;
+  string uuid = 2;
+  uint64 threshold_id = 3;
+}
+
+message CreateUserRequest {}
+message CreateUserResponse {
+  User user = 1;
+  AccessToken token = 2;
+}
+
+message AccessToken {
+  string token = 1;
+}

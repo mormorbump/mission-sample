@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package centray;
+
+import "verification.proto";
+
+option go_package = "pkg/grpc";
+
+service VerificationService {
+  rpc ChangeState(ChangeStateRequest) returns (ChangeStateResponse);
+  rpc VerificationStateServer(VerificationStateServerRequest) returns (stream VerificationStateServerResponse);
+  rpc VerificationDataBidirectional(stream VerificationDataBidirectionalRequest) returns (stream VerificationDataBidirectionalResponse);
+}

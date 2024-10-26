@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package centray;
+
+option go_package = "pkg/grpc";
+
+import "users.proto";
+
+message LoginRequest {
+  string uuid = 1;
+}
+
+message LoginResponse {
+  User user = 1;
+  AccessToken token = 2;
+}

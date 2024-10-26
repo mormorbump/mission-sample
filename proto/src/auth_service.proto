@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package centray;
+
+import "auth.proto";
+
+option go_package = "pkg/grpc";
+
+service AuthService {
+  rpc Login(LoginRequest) returns (LoginResponse);
+}

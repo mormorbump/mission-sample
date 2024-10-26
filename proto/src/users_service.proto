@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package centray;
+
+import "users.proto";
+
+option go_package = "pkg/grpc";
+
+service UsersService {
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+}

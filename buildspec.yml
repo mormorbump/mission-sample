@@ -1,0 +1,73 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_DEFAULT_REGION: "ap-northeast-1"
+    LATEST_TAG: "latest"
+    APP_NAME: "centrayapi-app"
+    MIGRATE_NAME: "centrayapi-migrate"
+
+phases:
+  pre_build:
+    commands:
+      - ECR_APP_REPO="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$APP_NAME"
+      - ECR_MIGRATE_REPO="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$MIGRATE_NAME"
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+  build:
+    commands:
+      - echo Building the app Docker image...
+      - COMMIT_HASH=$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} | cut -c 1-7)
+      - |
+        docker build . --platform=linux/amd64 --target=deploy -t $ECR_APP_REPO:$COMMIT_HASH
+      - docker tag $ECR_APP_REPO:$COMMIT_HASH $ECR_APP_REPO:latest
+      - if [ ! -z "$OPTION_TAG" ]; then docker tag $ECR_APP_REPO:$COMMIT_HASH $ECR_APP_REPO:$OPTION_TAG; fi
+      - echo Building the migrate Docker image...
+      - |
+        docker build . --platform=linux/amd64 --target=migrate -t $ECR_MIGRATE_REPO:$COMMIT_HASH
+      - docker tag $ECR_MIGRATE_REPO:$COMMIT_HASH $ECR_MIGRATE_REPO:latest
+      - if [ ! -z "$OPTION_TAG" ]; then docker tag $ECR_MIGRATE_REPO:$COMMIT_HASH $ECR_MIGRATE_REPO:$OPTION_TAG; fi
+  post_build:
+    commands:
+      - echo Pushing the Docker image...
+      - docker push $ECR_APP_REPO:$COMMIT_HASH
+      - docker push $ECR_APP_REPO:$LATEST_TAG
+      - docker push $ECR_MIGRATE_REPO:$COMMIT_HASH
+      - docker push $ECR_MIGRATE_REPO:$LATEST_TAG
+      - if [ ! -z "$OPTION_TAG" ]; then docker push $ECR_APP_REPO:$OPTION_TAG; fi
+      - if [ ! -z "$OPTION_TAG" ]; then docker push $ECR_MIGRATE_REPO:$OPTION_TAG; fi
+      - printf '[{"name":"app","imageUri":"%s"}]' $ECR_APP_REPO:$LATEST_TAG  > imagedefinitions.json
+      - echo Running ECS task for DB migrate...
+      - |
+        PROJECT_NAME=centray
+        CLUSTER_NAME="${PROJECT_NAME}-${DEPLOY_ENV}-cluster"
+        SUBNET_TAG_VALUE="${PROJECT_NAME}-${DEPLOY_ENV}-private-app-subnet-*"
+        SG_TAG_VALUE="${PROJECT_NAME}-${DEPLOY_ENV}-app-sg"
+        MIGRATE_TASK_DEFINITION="${PROJECT_NAME}-${DEPLOY_ENV}-migrate"
+      - echo Updating ECS task definition...
+      - |
+        aws ecs describe-task-definition --task-definition ${MIGRATE_TASK_DEFINITION} \
+          | jq '.taskDefinition | del(.taskDefinitionArn, .status, .requiresAttributes, .compatibilities, .revision, .registeredAt, .registeredBy)' \
+          | jq '(.containerDefinitions[] | select(.name == "migrate")).image = "'${ECR_MIGRATE_REPO}:${LATEST_TAG}'"' > /tmp/taskdef.json
+      - aws ecs register-task-definition --cli-input-json file:///tmp/taskdef.json
+      - |
+        SUBNET_IDS=$(aws ec2 describe-subnets \
+          --filters "Name=tag:Name,Values=$SUBNET_TAG_VALUE" \
+          --query "Subnets[*].SubnetId" \
+          --output text | tr -s '\t' ',')
+      - |
+        SG_ID=$(aws ec2 describe-security-groups \
+          --filters "Name=tag:Name,Values=$SG_TAG_VALUE" \
+          --query "SecurityGroups[*].GroupId" \
+          --output text)
+      - |
+        aws ecs run-task \
+          --cluster "${CLUSTER_NAME}" \
+          --task-definition "${MIGRATE_TASK_DEFINITION}" \
+          --launch-type FARGATE \
+          --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_IDS],securityGroups=[$SG_ID]}"
+      - echo ECS task for DB migrate is initiated.
+      - echo Build completed on `date`
+artifacts:
+  files:
+    - imagedefinitions.json
