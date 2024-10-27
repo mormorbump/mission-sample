@@ -1,7 +1,7 @@
-package component
+package mission
 
 import (
-	"com.graffity/mission-sample/server/applicationservice/dto"
+	"com.graffity/mission-sample/server/applicationservice/dto/mission"
 	"com.graffity/mission-sample/server/domain/entity"
 	"com.graffity/mission-sample/server/domain/repository"
 	"com.graffity/mission-sample/server/domain/service"
@@ -9,27 +9,27 @@ import (
 	"fmt"
 )
 
-type countReporter struct {
+type reachReporter struct {
 	mRepo  repository.MissionRepository
 	mpRepo repository.MissionProgressRepository
 	umRepo repository.UserMissionRepository
 }
 
-func NewCountReporter(
+func NewReachReporter(
 	missionRepository repository.MissionRepository,
 	missionProgressRepository repository.MissionProgressRepository,
 	userMissionRepository repository.UserMissionRepository,
-) MissionReporter {
-	return &countReporter{
+) Reporter {
+	return &reachReporter{
 		mRepo:  missionRepository,
 		mpRepo: missionProgressRepository,
 		umRepo: userMissionRepository,
 	}
 }
 
-func (r *countReporter) Report(ctx context.Context, userID entity.UserID, document *dto.Document) (dto.Results, error) {
-	ret := make(dto.Results, 0)
-	for _, dm := range document.MissionDataList {
+func (r *reachReporter) Report(ctx context.Context, userID entity.UserID, document *mission.Document) (mission.Results, error) {
+	ret := make(mission.Results, 0)
+	for _, dm := range document.DataList {
 		m := dm.Mission
 		mps, err := r.mpRepo.SelectByMissionID(ctx, m.ID)
 		if err != nil {
@@ -44,9 +44,9 @@ func (r *countReporter) Report(ctx context.Context, userID entity.UserID, docume
 			um = entity.NewUserMission(userID, m.ID, threshold)
 		}
 		// aggregate: 集計
-		p := document.Form.GetAggregateProgress(m)
-
-		updated := service.UpdateUserMission(ctx, um, mps, p)
+		p := document.Form.GetMaxProgress(m)
+		rm := service.NewReflectReachMissionStatus(um, mps, p)
+		updated := rm.UpdateUserMission(ctx)
 		if !updated {
 			continue
 		}
@@ -54,8 +54,8 @@ func (r *countReporter) Report(ctx context.Context, userID entity.UserID, docume
 			return nil, err
 		}
 
-		ret = append(ret, &dto.Result{
-			MissionData: &dto.MissionData{
+		ret = append(ret, &mission.Result{
+			MissionData: &mission.Data{
 				Mission:     m,
 				UserMission: um,
 			},

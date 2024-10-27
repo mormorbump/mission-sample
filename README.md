@@ -1,3 +1,7 @@
+# ミッションのサンプル実装
+様々なゲームシステムと密結合になりがちなミッション機能を疎結合にし、統一的に捉えられるように実装したサンプル
+
+
 ## ディレクトリ設計
 
 - pkg/grpc
@@ -58,39 +62,3 @@ docker compose down
 # 2回目以降の起動
 docker compose up -d
 ```
-
-
-### ECSデプロイ
-#### コンテナイメージをビルドしてECRにpushする
-```
-$ ./script/build-and-push-image.sh --tag dev1
-Successfully pushed the image to ECR with tag 236f295
-specify image 224735682946.dkr.ecr.ap-northeast-1.amazonaws.com/nornapi-app:236f295 in your task definition
-
-Successfully pushed the image to ECR with tag latest
-specify image 224735682946.dkr.ecr.ap-northeast-1.amazonaws.com/nornapi-app:latest in your task definition
-
-Successfully pushed the image to ECR with tag dev4
-specify image 224735682946.dkr.ecr.ap-northeast-1.amazonaws.com/nornapi-app:dev4 in your task definition
-```
-ECRリポジトリにpushされたイメージにはコミットハッシュ、latest、--tagで指定したものがタグとして付けられます。  
-今後はこのタグを指定してデプロイすることを想定しています。
-
-#### latestタグを利用してデプロイする
-```
-./script/deploy-latest.sh --env dev1
-```
-このコマンドではlatestタグのコンテナイメージを利用して以下の2点を実行しています。
-* DBマイグレーションの実行
-* ECSサービスのデプロイ
-
-#### タグを指定してデプロイする
-TODO: 未実装
-
-## 認証
-
-JWT
-https://christina04.hatenablog.com/entry/2017/04/15/042646
-
-config以下にRSA秘密鍵をおくことで著名と暗号化を行う。とりあえずトークンに含めるのはuserIdとuuid
-本開発フェーズで、sessionIdをRedis管理し、そのsessionIdをJWTにしクライアントに渡すことでセキュリティレベルを高くしたい

@@ -1,9 +1,15 @@
 package entity
 
 type User struct {
-	UserID UserID
+	ID UserID
 }
 
 type Users []*User
 
-type UserID string
+type UserID int64
+
+type UserPK struct {
+	UserID UserID
+}
+
+type UserPKs []*UserPK

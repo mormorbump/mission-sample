@@ -1,4 +1,4 @@
-package dto
+package mission
 
 import (
 	"com.graffity/mission-sample/server/domain/entity"
@@ -35,6 +35,16 @@ func (f *Form) GetAggregateProgress(m *entity.Mission) int64 {
 	for _, t := range f.Targets {
 		if m.IsTarget(t.ID) {
 			ret += t.Progress
+		}
+	}
+	return ret
+}
+
+func (f *Form) GetMaxProgress(m *entity.Mission) int64 {
+	var ret int64
+	for _, t := range f.Targets {
+		if m.IsTarget(t.ID) && ret < t.Progress {
+			ret = t.Progress
 		}
 	}
 	return ret

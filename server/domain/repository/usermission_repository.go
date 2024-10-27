@@ -6,6 +6,6 @@ import (
 )
 
 type UserMissionRepository interface {
-	SelectByPKs(ctx context.Context, pks entity.MissionProgressPKs) (entity.MissionProgresses, error)
+	SelectByPKs(ctx context.Context, pks entity.UserMissionPKs) (entity.UserMissions, error)
 	Save(ctx context.Context, e *entity.UserMission) error
 }

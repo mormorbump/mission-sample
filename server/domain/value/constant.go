@@ -8,6 +8,7 @@ const (
 	MissionTypeTargetQuestClearCount MissionType = 3 // 指定クエストクリア回数
 	MissionTypeMiniGameClearReach    MissionType = 4 // ミニゲーム最高得点到達
 	MissionTypeCharacterLevelReach   MissionType = 5 // キャラクター最大レベル到達
+	MissionTypeUserCreateReach       MissionType = 6 // キャラクター最大レベル到達
 )
 
 type StatusType = int32 // ユーザのミッション状況
