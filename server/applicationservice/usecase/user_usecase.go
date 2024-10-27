@@ -2,34 +2,48 @@ package usecase
 
 import (
 	"com.graffity/mission-sample/server/applicationservice/component"
-	"com.graffity/mission-sample/server/applicationservice/dto/mission"
+	"com.graffity/mission-sample/server/applicationservice/component/mission"
+	dtomission "com.graffity/mission-sample/server/applicationservice/dto/mission"
 	"com.graffity/mission-sample/server/domain/entity"
 	"com.graffity/mission-sample/server/domain/repository"
 	"com.graffity/mission-sample/server/domain/value"
 	"context"
+	"errors"
+	"log"
 )
 
 type UserUsecase struct {
 	userRepository   repository.UserRepository
-	missionProsessor *component.MissionProcessor
+	missionProcessor *component.MissionProcessor
 }
 
-func NewUserUsecase(userRepository repository.UserRepository, missionProsessor *component.MissionProcessor) *UserUsecase {
+func NewUserUsecase(userRepository repository.UserRepository, missionProcessor *component.MissionProcessor) *UserUsecase {
+	countReporter := mission.NewCountReporter(missionProcessor.MissionRepo, missionProcessor.MissionProgressRepo, missionProcessor.UserMissionRepo)
+	reachReporter := mission.NewReachReporter(missionProcessor.MissionRepo, missionProcessor.MissionProgressRepo, missionProcessor.UserMissionRepo)
+	missionProcessor.AddReporter(
+		mission.Info{
+			MissionType: value.MissionTypeLoginCount,
+			Reporter:    countReporter,
+		},
+		mission.Info{
+			MissionType: value.MissionTypeUserCreateReach,
+			Reporter:    reachReporter,
+		},
+	)
 	return &UserUsecase{
 		userRepository:   userRepository,
-		missionProsessor: missionProsessor,
+		missionProcessor: missionProcessor,
 	}
 }
 
-func (u *UserUsecase) Save(ctx context.Context) (*entity.User, mission.Results, error) {
+func (u *UserUsecase) Save(ctx context.Context) (*entity.User, dtomission.Results, error) {
 	user := &entity.User{}
 	err := u.userRepository.Create(ctx, user)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// TODO registryで定義したaddReporterにミスがあると例外出る
-	forms := mission.Forms{
+	forms := dtomission.Forms{
 		{
 			MissionType: value.MissionTypeLoginCount,
 			Targets: entity.Targets{
@@ -43,9 +57,14 @@ func (u *UserUsecase) Save(ctx context.Context) (*entity.User, mission.Results, 
 			},
 		},
 	}
-	missionData, err := u.missionProsessor.UpdateMissions(ctx, user.ID, forms)
+	missionData, err := u.missionProcessor.UpdateMissions(ctx, user.ID, forms)
 	if err != nil {
-		return user, nil, err
+		// addReporterのエラーハンドリング
+		if errors.Is(err, component.ErrAddReporter) {
+			// 特定のエラー処理
+			log.Printf("addReporter error: %v", err)
+			return user, nil, err
+		}
 	}
 
 	return user, missionData, nil

@@ -4,10 +4,8 @@ package registry
 // UI, Infrastructureのさらに外側にいるイメージ
 import (
 	"com.graffity/mission-sample/server/applicationservice/component"
-	"com.graffity/mission-sample/server/applicationservice/component/mission"
 	"com.graffity/mission-sample/server/applicationservice/usecase"
 	"com.graffity/mission-sample/server/domain/repository"
-	"com.graffity/mission-sample/server/domain/value"
 	"com.graffity/mission-sample/server/user_interface/handler"
 )
 
@@ -36,22 +34,8 @@ func (r *UserRegistryImpl) UserUsecase() *usecase.UserUsecase {
 	return usecase.NewUserUsecase(r.UserRepository(), r.missionProcessor())
 }
 
-// TODO AddReporterの呼び出し場所がここで適切か
 func (r *UserRegistryImpl) missionProcessor() *component.MissionProcessor {
-	processor := component.NewMissionProcessor(r.MissionRepository(), r.MissionProgressRepository(), r.UserMissionRepository())
-	countReporter := mission.NewCountReporter(r.MissionRepository(), r.MissionProgressRepository(), r.UserMissionRepository())
-	reachReporter := mission.NewReachReporter(r.MissionRepository(), r.MissionProgressRepository(), r.UserMissionRepository())
-	processor.AddReporter(
-		mission.Info{
-			MissionType: value.MissionTypeLoginCount,
-			Reporter:    countReporter,
-		},
-		mission.Info{
-			MissionType: value.MissionTypeUserCreateReach,
-			Reporter:    reachReporter,
-		},
-	)
-	return processor
+	return component.NewMissionProcessor(r.MissionRepository(), r.MissionProgressRepository(), r.UserMissionRepository())
 }
 
 func (r *UserRegistryImpl) UserRepository() repository.UserRepository {

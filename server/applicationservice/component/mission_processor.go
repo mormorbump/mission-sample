@@ -12,10 +12,10 @@ import (
 )
 
 type MissionProcessor struct {
-	mRepo       repository.MissionRepository
-	mpRepo      repository.MissionProgressRepository
-	umRepo      repository.UserMissionRepository
-	reporterMap map[value.MissionType]mission.Reporter
+	MissionRepo         repository.MissionRepository
+	MissionProgressRepo repository.MissionProgressRepository
+	UserMissionRepo     repository.UserMissionRepository
+	reporterMap         map[value.MissionType]mission.Reporter
 }
 
 func NewMissionProcessor(
@@ -25,10 +25,10 @@ func NewMissionProcessor(
 ) *MissionProcessor {
 	m := make(map[value.MissionType]mission.Reporter)
 	return &MissionProcessor{
-		mRepo:       missionRepository,
-		mpRepo:      missionProgressRepository,
-		umRepo:      userMissionRepository,
-		reporterMap: m,
+		MissionRepo:         missionRepository,
+		MissionProgressRepo: missionProgressRepository,
+		UserMissionRepo:     userMissionRepository,
+		reporterMap:         m,
 	}
 }
 
@@ -70,7 +70,7 @@ func (p *MissionProcessor) UpdateMissions(ctx context.Context, userID entity.Use
 // MissionIDのユニークであるIDSetと、MissionTypeをキーとし、キーでグルーピングしたFormMapを取得するメソッド
 // MissionマスタにはMissionTypeがあるので、それぞれ別々で取得してもあとで紐付けられる(なんならMissionTypeが同じMissionIDがあるので別じゃないとだめ)
 func (p *MissionProcessor) getMissionIDSetAndFormMap(ctx context.Context, forms missiondto.Forms) (*strset.Set, map[value.MissionType]*missiondto.Form, error) {
-	missions, err := p.mRepo.SelectAll(ctx)
+	missions, err := p.MissionRepo.SelectAll(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -117,11 +117,11 @@ func (p *MissionProcessor) getMissionsAndUserMissions(ctx context.Context, userI
 		})
 	}
 
-	ms, err := p.mRepo.SelectByPKs(ctx, mPKs)
+	ms, err := p.MissionRepo.SelectByPKs(ctx, mPKs)
 	if err != nil {
 		return nil, nil, err
 	}
-	ums, err := p.umRepo.SelectByPKs(ctx, umPKs)
+	ums, err := p.UserMissionRepo.SelectByPKs(ctx, umPKs)
 
 	return ms, ums, nil
 }
