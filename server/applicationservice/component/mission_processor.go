@@ -2,7 +2,7 @@ package component
 
 import (
 	"com.graffity/mission-sample/server/applicationservice/component/mission"
-	dto "com.graffity/mission-sample/server/applicationservice/dto/mission"
+	missiondto "com.graffity/mission-sample/server/applicationservice/dto/mission"
 	"com.graffity/mission-sample/server/domain/entity"
 	"com.graffity/mission-sample/server/domain/repository"
 	"com.graffity/mission-sample/server/domain/value"
@@ -42,7 +42,7 @@ func (p *MissionProcessor) AddReporter(infoList ...mission.Info) {
 	}
 }
 
-func (p *MissionProcessor) UpdateMissions(ctx context.Context, userID entity.UserID, forms dto.Forms) (dto.Results, error) {
+func (p *MissionProcessor) UpdateMissions(ctx context.Context, userID entity.UserID, forms missiondto.Forms) (missiondto.Results, error) {
 	missionIDSet, formMap, err := p.getMissionIDSetAndFormMap(ctx, forms)
 	if err != nil {
 		return nil, err
@@ -69,17 +69,17 @@ func (p *MissionProcessor) UpdateMissions(ctx context.Context, userID entity.Use
 // getMissionIDSetAndFormMap
 // MissionIDのユニークであるIDSetと、MissionTypeをキーとし、キーでグルーピングしたFormMapを取得するメソッド
 // MissionマスタにはMissionTypeがあるので、それぞれ別々で取得してもあとで紐付けられる(なんならMissionTypeが同じMissionIDがあるので別じゃないとだめ)
-func (p *MissionProcessor) getMissionIDSetAndFormMap(ctx context.Context, forms dto.Forms) (*strset.Set, map[value.MissionType]*dto.Form, error) {
+func (p *MissionProcessor) getMissionIDSetAndFormMap(ctx context.Context, forms missiondto.Forms) (*strset.Set, map[value.MissionType]*missiondto.Form, error) {
 	missions, err := p.mRepo.SelectAll(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 	// 元のFormを変更しないようにコピー
-	copyForms := make(dto.Forms, len(forms))
+	copyForms := make(missiondto.Forms, len(forms))
 	copy(copyForms, forms)
 
 	idSet := strset.New()
-	formMap := make(map[value.MissionType]*dto.Form)
+	formMap := make(map[value.MissionType]*missiondto.Form)
 
 	for _, form := range copyForms {
 		// form情報からマスターミッションIDsを特定する。
@@ -133,9 +133,9 @@ func (p *MissionProcessor) updateMissions(
 	userID entity.UserID,
 	mMap map[value.MissionType]entity.Missions,
 	umMap map[entity.MissionID]*entity.UserMission,
-	fMap map[value.MissionType]*dto.Form,
-) (dto.Results, error) {
-	ret := make(dto.Results, 0, len(fMap))
+	fMap map[value.MissionType]*missiondto.Form,
+) (missiondto.Results, error) {
+	ret := make(missiondto.Results, 0, len(fMap))
 
 	for missionType, form := range fMap {
 		// missionTypeに対応したmissionsを取得。なければスキップ
@@ -144,8 +144,8 @@ func (p *MissionProcessor) updateMissions(
 			continue
 		}
 		// MissionsとUserMissionMapを用いて、Documentを作成
-		mdl := dto.CreateMissionDataList(ms, umMap)
-		doc := dto.Document{
+		mdl := missiondto.CreateMissionDataList(ms, umMap)
+		doc := missiondto.Document{
 			Form:     form,
 			DataList: mdl,
 		}

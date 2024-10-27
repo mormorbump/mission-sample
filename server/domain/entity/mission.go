@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"com.graffity/mission-sample/server/applicationservice/dto/mission"
 	"com.graffity/mission-sample/server/domain/value"
 )
 
@@ -11,11 +10,11 @@ type Mission struct {
 	MissionType value.MissionType
 	// ミッション対象のIDリスト。null許可
 	// クエストIDやキャラクターIDなどが入り、それはMissionTypeにより対象が異なる
-	TargetID string
+	TargetID TargetID
 	Name     string
 }
-
 type Missions []*Mission
+
 type MissionID string
 type MissionIDs []MissionID
 
@@ -25,7 +24,7 @@ type MissionPK struct {
 
 type MissionPKs []*MissionPK
 
-func (m *Mission) IsTarget(targetID string) bool {
+func (m *Mission) IsTarget(targetID TargetID) bool {
 	return m.TargetID == "" || m.TargetID == targetID
 }
 
@@ -41,7 +40,7 @@ func (ms Missions) FilterByMissionType(missionType value.MissionType) Missions {
 
 // FilterByTargets MissionsからtargetIDがnilまたは一致するものをFilter
 // ここのレシーバのMissionsはMissionTypeで絞った後を想定しているので、Targetsの中のTargetIDの型は一致する
-func (ms Missions) FilterByTargets(targets mission.Targets) Missions {
+func (ms Missions) FilterByTargets(targets Targets) Missions {
 	ret := make(Missions, 0)
 	for _, t := range targets {
 		ret = append(ret, ms.FilterByTargetID(t.ID)...)
@@ -49,7 +48,7 @@ func (ms Missions) FilterByTargets(targets mission.Targets) Missions {
 	return ret
 }
 
-func (ms Missions) FilterByTargetID(targetID string) Missions {
+func (ms Missions) FilterByTargetID(targetID TargetID) Missions {
 	ret := make(Missions, 0, len(ms))
 	for _, m := range ms {
 		if m.IsTarget(targetID) {

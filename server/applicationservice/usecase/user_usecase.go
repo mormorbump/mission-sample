@@ -32,13 +32,13 @@ func (u *UserUsecase) Save(ctx context.Context) (*entity.User, mission.Results, 
 	forms := mission.Forms{
 		{
 			MissionType: value.MissionTypeLoginCount,
-			Targets: mission.Targets{
+			Targets: entity.Targets{
 				{Progress: 1},
 			},
 		},
 		{
 			MissionType: value.MissionTypeUserCreateReach,
-			Targets: mission.Targets{
+			Targets: entity.Targets{
 				{Progress: 1},
 			},
 		},

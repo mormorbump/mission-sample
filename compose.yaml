@@ -14,54 +14,12 @@ services:
       DATABASE_HOST: mysql
       DATABASE_NAME: mission_sample
       REDIS_ADDRESS: redis:6379
-      PRIVATE_KEY_PATH: ./server/config/centray_secret.key
+      PRIVATE_KEY_PATH: ./server/config/secret.key
     volumes:
       - .:/app
       - go_mod:/go/pkg/mod
       - go_build:/root/.cache/go-build
-    depends_on:
-      - redis
-      - mysql
-
-  migrator:
-    container_name: migrate-container
-    build:
-      context: .
-      target: migrate
-    environment:
-      DATABASE_USER: root
-      DATABASE_PASSWORD: root
-      DATABASE_HOST: mysql
-      DATABASE_NAME: mission_sample
-    depends_on:
-      - mysql
-
-  redis:
-    container_name: redis-container
-    image: redis:7.2
-    restart: always
-    volumes:
-      - redis-data:/var/lib/redis
-    command: [ "redis-server", "--appendonly", "yes" ]
-    ports:
-      - "6379:6379"
-
-  mysql:
-    container_name: mysql-container
-    image: mysql:5.7
-    platform: linux/amd64
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: centray_db
-    ports:
-      - "5306:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
 
 volumes:
-  mysql-data:
-  redis-data:
   go_mod:
   go_build:

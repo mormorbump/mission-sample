@@ -16,24 +16,16 @@ type UserRegistry interface {
 	UserHandler() *handler.UserHandler
 	UserProcessor() *handler.UserHandler
 	UserRepository() *handler.UserHandler
+	MissionRepository() repository.MissionRepository
+	MissionProgressRepository() repository.MissionProgressRepository
+	UserMissionRepository() repository.UserMissionRepository
 }
 
 type UserRegistryImpl struct {
-	mRepo  repository.MissionRepository
-	mpRepo repository.MissionProgressRepository
-	umRepo repository.UserMissionRepository
 }
 
-func NewUserRegistryImpl(
-	missionRepository repository.MissionRepository,
-	missionProgressRepository repository.MissionProgressRepository,
-	userMissionRepository repository.UserMissionRepository,
-) *UserRegistryImpl {
-	return &UserRegistryImpl{
-		mRepo:  missionRepository,
-		mpRepo: missionProgressRepository,
-		umRepo: userMissionRepository,
-	}
+func NewUserRegistryImpl() *UserRegistryImpl {
+	return &UserRegistryImpl{}
 }
 
 func (r *UserRegistryImpl) UserHandler() *handler.UserHandler {
@@ -46,9 +38,9 @@ func (r *UserRegistryImpl) UserUsecase() *usecase.UserUsecase {
 
 // TODO AddReporterの呼び出し場所がここで適切か
 func (r *UserRegistryImpl) missionProcessor() *component.MissionProcessor {
-	processor := component.NewMissionProcessor(r.mRepo, r.mpRepo, r.umRepo)
-	countReporter := mission.NewCountReporter(r.mRepo, r.mpRepo, r.umRepo)
-	reachReporter := mission.NewReachReporter(r.mRepo, r.mpRepo, r.umRepo)
+	processor := component.NewMissionProcessor(r.MissionRepository(), r.MissionProgressRepository(), r.UserMissionRepository())
+	countReporter := mission.NewCountReporter(r.MissionRepository(), r.MissionProgressRepository(), r.UserMissionRepository())
+	reachReporter := mission.NewReachReporter(r.MissionRepository(), r.MissionProgressRepository(), r.UserMissionRepository())
 	processor.AddReporter(
 		mission.Info{
 			MissionType: value.MissionTypeLoginCount,
@@ -63,5 +55,17 @@ func (r *UserRegistryImpl) missionProcessor() *component.MissionProcessor {
 }
 
 func (r *UserRegistryImpl) UserRepository() repository.UserRepository {
+	return nil
+}
+
+func (r *UserRegistryImpl) UserMissionRepository() repository.UserMissionRepository {
+	return nil
+}
+
+func (r *UserRegistryImpl) MissionRepository() repository.MissionRepository {
+	return nil
+}
+
+func (r *UserRegistryImpl) MissionProgressRepository() repository.MissionProgressRepository {
 	return nil
 }
