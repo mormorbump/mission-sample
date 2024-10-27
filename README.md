@@ -33,20 +33,7 @@ Infrastructure, UI(Presentation) -> UseCase(Application Service) -> Domain
 https://moneyforward-dev.jp/entry/2021/03/08/go-test-mock/
 
 Application Service層はUsecaseと命名する。
-Protobufのserviceとかぶるし、単純にserviceという名前が低凝縮になりやすい。
-
-## migration
-go-migrationを使用
-
-https://zenn.dev/farstep/books/f74e6b76ea7456/viewer/4cd440
-
-```shell
-# migrationファイル作成
-migrate create -ext sql -dir db/migrations -seq create_users_table
-
-# migration実行
-migrate --path db/migrations --database 'mysql://root:root@localhost:3306/centray-{env}-db' -verbose up
-```
+Protobufのserviceとかぶるし、単純にserviceという名前が低凝縮になりやすい
 
 ## Docker init
 
